@@ -2,7 +2,7 @@ BUILD_TIME      := $(shell date "+%F %T")
 COMMIT_SHA1     := $(shell git rev-parse HEAD )
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= mlmodel.oa.fenqile.com/mlserver/ray-controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 # Golang forbids converting float from Json to struct. Need allowDangerousTypes=true to unblock build.
 CRD_OPTIONS ?= "crd:maxDescLen=0,trivialVersions=true,preserveUnknownFields=false,generateEmbeddedObjectMeta=true,allowDangerousTypes=true"
@@ -73,6 +73,7 @@ sync: helm
 ##@ Build
 
 build: generate fmt vet ## Build manager binary.
+	export CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on && \
 	go build                                    \
     -ldflags                                    \
     "                                           \

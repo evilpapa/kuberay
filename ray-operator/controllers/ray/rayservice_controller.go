@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 
 	"github.com/ray-project/kuberay/ray-operator/controllers/ray/common"
 
@@ -319,7 +319,7 @@ func (r *RayServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		))).
 		Owns(&rayv1alpha1.RayCluster{}).
 		Owns(&corev1.Service{}).
-		Owns(&networkingv1.Ingress{}).
+		Owns(&networkingv1beta1.Ingress{}).
 		Complete(r)
 }
 
@@ -925,7 +925,7 @@ func (r *RayServiceReconciler) reconcileIngress(ctx context.Context, rayServiceI
 	ingress.Name = utils.CheckName(ingress.Name)
 
 	// Get Ingress instance.
-	headIngress := &networkingv1.Ingress{}
+	headIngress := &networkingv1beta1.Ingress{}
 	err = r.Get(ctx, client.ObjectKey{Name: ingress.Name, Namespace: rayServiceInstance.Namespace}, headIngress)
 
 	if err == nil {

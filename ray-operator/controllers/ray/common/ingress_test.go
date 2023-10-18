@@ -125,7 +125,7 @@ func TestBuildIngressForHeadService(t *testing.T) {
 	headSvcName, err := utils.GenerateHeadServiceName(utils.RayClusterCRD, instanceWithIngressEnabled.Spec, instanceWithIngressEnabled.Name)
 	assert.Nil(t, err)
 	for _, path := range paths {
-		actualResult = path.Backend.Service.Name
+		actualResult = path.Backend.ServiceName
 		expectedResult = headSvcName
 
 		if !reflect.DeepEqual(expectedResult, actualResult) {

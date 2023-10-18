@@ -58,12 +58,15 @@ func BuildServiceForHeadPod(cluster rayv1alpha1.RayCluster, labels map[string]st
 	default_namespace := cluster.Namespace
 	default_type := cluster.Spec.HeadGroupSpec.ServiceType
 
-	defaultAppProtocol := DefaultServiceAppProtocol
+	//defaultAppProtocol := DefaultServiceAppProtocol
 	// `ports_int` is a map of port names to port numbers, while `ports` is a list of ServicePort objects
 	ports_int := getServicePorts(cluster)
 	ports := []corev1.ServicePort{}
 	for name, port := range ports_int {
-		svcPort := corev1.ServicePort{Name: name, Port: port, AppProtocol: &defaultAppProtocol}
+		// 报错信息：ERROR controller.raycluster-controller Reconciler error {"reconciler group": "ray.io", "reconciler kind": "RayCluster", "name": "raycluster-mini", "namespace": "default", "error": "Service \"raycluster-mini-head-svc\" is invalid: [spec.ports[0].appProtocol: Forbidden: This field can be enabled with the ServiceAppProtocol feature gate, spec.ports[1].appProtocol: Forbidden: This field can be enabled with the ServiceAppProtocol feature gate, spec.ports[2].appProtocol: Forbidden: This field can be enabled with the ServiceAppProtocol feature gate, spec.ports[3].appProtocol: Forbidden: This field can be enabled with the ServiceAppProtocol feature gate]"}
+		// 参考：https://docs.zowe.org/v2.6.x/troubleshoot/k8s-troubleshoot/
+		// svcPort := corev1.ServicePort{Name: name, Port: port, AppProtocol: &defaultAppProtocol}
+		svcPort := corev1.ServicePort{Name: name, Port: port}
 		ports = append(ports, svcPort)
 	}
 	if cluster.Spec.HeadGroupSpec.HeadService != nil {

@@ -2,12 +2,13 @@ package common
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/ray-project/kuberay/ray-operator/controllers/ray/utils"
 
 	rayv1alpha1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1alpha1"
 	"github.com/sirupsen/logrus"
-	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,7 +16,7 @@ const IngressClassAnnotationKey = "kubernetes.io/ingress.class"
 
 // BuildIngressForHeadService Builds the ingress for head service dashboard.
 // This is used to expose dashboard for external traffic.
-func BuildIngressForHeadService(cluster rayv1alpha1.RayCluster) (*networkingv1.Ingress, error) {
+func BuildIngressForHeadService(cluster rayv1alpha1.RayCluster) (*networkingv1beta1.Ingress, error) {
 	labels := map[string]string{
 		RayClusterLabelKey:                cluster.Name,
 		RayIDLabelKey:                     utils.GenerateIdentifier(cluster.Name, rayv1alpha1.HeadNode),
@@ -37,8 +38,8 @@ func BuildIngressForHeadService(cluster rayv1alpha1.RayCluster) (*networkingv1.I
 		}
 	}
 
-	var paths []networkingv1.HTTPIngressPath
-	pathType := networkingv1.PathTypeExact
+	var paths []networkingv1beta1.HTTPIngressPath
+	pathType := networkingv1beta1.PathTypeExact
 	servicePorts := getServicePorts(cluster)
 	dashboardPort := int32(DefaultDashboardPort)
 	if port, ok := servicePorts["dashboard"]; ok {
@@ -49,33 +50,41 @@ func BuildIngressForHeadService(cluster rayv1alpha1.RayCluster) (*networkingv1.I
 	if err != nil {
 		return nil, err
 	}
-	paths = []networkingv1.HTTPIngressPath{
+	paths = []networkingv1beta1.HTTPIngressPath{
 		{
 			Path:     "/" + cluster.Name + "/(.*)",
 			PathType: &pathType,
-			Backend: networkingv1.IngressBackend{
-				Service: &networkingv1.IngressServiceBackend{
-					Name: headSvcName,
-					Port: networkingv1.ServiceBackendPort{
-						Number: dashboardPort,
-					},
+			//Backend: networkingv1beta1.IngressBackend{
+			//
+			//	Service: &networkingv1beta1.IngressServiceBackend{
+			//		Name: headSvcName,
+			//		Port: networkingv1beta1.ServiceBackendPort{
+			//			Number: dashboardPort,
+			//		},
+			//	},
+			//},
+			Backend: networkingv1beta1.IngressBackend{
+				ServiceName: headSvcName,
+				ServicePort: intstr.IntOrString{
+					IntVal: dashboardPort,
 				},
+				Resource: nil,
 			},
 		},
 	}
 
-	ingress := &networkingv1.Ingress{
+	ingress := &networkingv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        utils.GenerateIngressName(cluster.Name),
 			Namespace:   cluster.Namespace,
 			Labels:      labels,
 			Annotations: annotation,
 		},
-		Spec: networkingv1.IngressSpec{
-			Rules: []networkingv1.IngressRule{
+		Spec: networkingv1beta1.IngressSpec{
+			Rules: []networkingv1beta1.IngressRule{
 				{
-					IngressRuleValue: networkingv1.IngressRuleValue{
-						HTTP: &networkingv1.HTTPIngressRuleValue{
+					IngressRuleValue: networkingv1beta1.IngressRuleValue{
+						HTTP: &networkingv1beta1.HTTPIngressRuleValue{
 							Paths: paths,
 						},
 					},
@@ -99,7 +108,7 @@ func BuildIngressForHeadService(cluster rayv1alpha1.RayCluster) (*networkingv1.I
 // BuildIngressForRayService Builds the ingress for head service dashboard for RayService.
 // This is used to expose dashboard for external traffic.
 // RayService controller updates the ingress whenever a new RayCluster serves the traffic.
-func BuildIngressForRayService(service rayv1alpha1.RayService, cluster rayv1alpha1.RayCluster) (*networkingv1.Ingress, error) {
+func BuildIngressForRayService(service rayv1alpha1.RayService, cluster rayv1alpha1.RayCluster) (*networkingv1beta1.Ingress, error) {
 	ingress, err := BuildIngressForHeadService(cluster)
 	if err != nil {
 		return nil, err
